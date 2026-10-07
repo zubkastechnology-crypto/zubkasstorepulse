@@ -276,7 +276,7 @@ export default function PosPage() {
                 ))}
               </div>
             ) : filtered.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {filtered.map((p) => {
                   const outOfStock = p.stock <= 0
                   const flashing = flashId === p.id
@@ -285,19 +285,19 @@ export default function PosPage() {
                       key={p.id}
                       onClick={() => addToCart(p)}
                       disabled={outOfStock}
-                      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition ${
+                      className={`group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white text-left shadow-sm transition-all duration-200 active:scale-95 ${
                         outOfStock
-                          ? 'border-slate-100 opacity-50 cursor-not-allowed'
-                          : 'border-slate-200 hover:border-brand/30 hover:shadow-md'
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'hover:shadow-md hover:border-red-300'
                       } ${flashing ? 'ring-2 ring-brand/40 animate-scale-in' : ''}`}
                     >
                       {/* Image */}
-                      <div className="relative h-24 w-full overflow-hidden bg-slate-50">
+                      <div className="relative aspect-square w-full overflow-hidden bg-slate-50">
                         {p.imageUrl ? (
                           <img
                             src={p.imageUrl}
                             alt={p.name}
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                           />
                         ) : (
@@ -309,7 +309,7 @@ export default function PosPage() {
                           </div>
                         )}
                         {!outOfStock && (
-                          <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-medium text-slate-600 shadow-sm">
+                          <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-medium text-slate-700 shadow-xs backdrop-blur-sm">
                             {p.stock} left
                           </span>
                         )}
@@ -320,15 +320,15 @@ export default function PosPage() {
                         )}
                       </div>
                       {/* Info */}
-                      <div className="flex flex-1 flex-col p-3">
-                        <p className="line-clamp-2 text-sm font-semibold text-slate-900">{p.name}</p>
-                        <p className="mt-0.5 text-xs text-slate-400">SKU: {p.sku}</p>
-                        <div className="mt-auto pt-2">
-                          <span className="font-display text-lg font-bold text-brand">
+                      <div className="flex flex-1 flex-col p-2.5">
+                        <p className="line-clamp-1 text-sm font-medium text-slate-800 group-hover:text-red-700">{p.name}</p>
+                        <p className="mt-0.5 font-mono text-[11px] text-slate-400">{p.sku}</p>
+                        <div className="mt-auto flex items-baseline gap-1.5 pt-1.5">
+                          <span className="text-sm font-bold text-red-700">
                             {formatCurrency(p.salePrice ?? p.price)}
                           </span>
-                          {p.salePrice !== null && (
-                            <span className="ml-1.5 text-xs text-slate-400 line-through">{formatCurrency(p.price)}</span>
+                          {p.salePrice !== null && p.salePrice < p.price && (
+                            <span className="text-xs text-slate-400 line-through">{formatCurrency(p.price)}</span>
                           )}
                         </div>
                       </div>
