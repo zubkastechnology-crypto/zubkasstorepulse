@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import {
-  Package, Plus, Search, Pencil, Trash2, RefreshCw, AlertTriangle,
-  Boxes, DollarSign, X,
-} from 'lucide-react'
+import { Package, Plus, Search, Pencil, Trash2, RefreshCw, TriangleAlert as AlertTriangle, Boxes, DollarSign, X } from 'lucide-react'
 import AppLayout from '@/components/AppLayout'
 import AddProductModal from '@/components/AddProductModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
@@ -13,15 +10,10 @@ import {
   createProduct, updateProduct, deleteProduct, updateProductField,
   type CreateProductInput,
 } from '@/lib/woocommerce'
-import {
-  createStandaloneProduct, updateStandaloneProduct, deleteStandaloneProduct,
-  updateStandaloneProductStock,
-} from '@/lib/standaloneDb'
 import { formatCurrency, type Product } from '@/data/mockData'
 
 export default function ProductsPage() {
-  const { products, loading, isLive, connection, refresh, addProduct, updateProduct: updateProductState, removeProduct, pushToast, appMode } = useWoo()
-  const isStandalone = appMode === 'standalone' || !connection
+  const { products, loading, isLive, connection, refresh, addProduct, updateProduct: updateProductState, removeProduct, pushToast } = useWoo()
 
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('All')
@@ -91,71 +83,51 @@ export default function ProductsPage() {
   }
 
   const handleSave = async (data: Omit<Product, 'id' | 'unitsSold'>, id?: string) => {
-    if (isStandalone) {
-      const input = {
-        name: data.name,
-        sku: data.sku,
-        category: data.category,
-        regularPrice: data.price,
-        salePrice: data.salePrice,
-        stockQuantity: data.stock,
-        imageUrl: data.imageUrl,
-        description: data.description,
+    if (!connection) {
+      pushToast('error', 'No WooCommerce connection. Please connect your store in Settings.')
+      setModalOpen(false)
+      setEditTarget(null)
+      return
+    }
+    const input: CreateProductInput = {
+      name: data.name,
+      sku: data.sku,
+      category: data.category,
+      price: data.price,
+      salePrice: data.salePrice,
+      stock: data.stock,
+      manageStock: data.manageStock,
+      stockStatus: data.stockStatus,
+      imageUrl: data.imageUrl,
+      description: data.description,
+      type: data.type,
+      virtual: data.virtual,
+      downloadable: data.downloadable,
+      backorders: data.backorders,
+      taxStatus: data.taxStatus,
+      taxClass: data.taxClass,
+      saleStartDate: data.saleStartDate,
+      saleEndDate: data.saleEndDate,
+      downloads: data.downloads,
+      downloadLimit: data.downloadLimit,
+      downloadExpiry: data.downloadExpiry,
+      attributes: data.attributes,
+      variations: data.variations,
+      tags: data.tags,
+      fullDescription: data.fullDescription,
+    }
+    try {
+      if (id) {
+        const updated = await updateProduct(connection, id, input)
+        updateProductState(id, updated)
+        pushToast('success', `Product "${updated.name}" updated and synced to store.`)
+      } else {
+        const created = await createProduct(connection, input)
+        addProduct(created)
+        pushToast('success', `Product "${created.name}" created and synced to store.`)
       }
-      try {
-        if (id) {
-          const updated = await updateStandaloneProduct(id, input)
-          updateProductState(id, updated)
-          pushToast('success', `Product "${updated.name}" updated successfully.`)
-        } else {
-          const created = await createStandaloneProduct(input)
-          addProduct(created)
-          pushToast('success', `Product "${created.name}" created successfully.`)
-        }
-      } catch (err) {
-        pushToast('error', `Failed to save product: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      }
-    } else if (connection) {
-      const input: CreateProductInput = {
-        name: data.name,
-        sku: data.sku,
-        category: data.category,
-        price: data.price,
-        salePrice: data.salePrice,
-        stock: data.stock,
-        manageStock: data.manageStock,
-        stockStatus: data.stockStatus,
-        imageUrl: data.imageUrl,
-        description: data.description,
-        type: data.type,
-        virtual: data.virtual,
-        downloadable: data.downloadable,
-        backorders: data.backorders,
-        taxStatus: data.taxStatus,
-        taxClass: data.taxClass,
-        saleStartDate: data.saleStartDate,
-        saleEndDate: data.saleEndDate,
-        downloads: data.downloads,
-        downloadLimit: data.downloadLimit,
-        downloadExpiry: data.downloadExpiry,
-        attributes: data.attributes,
-        variations: data.variations,
-        tags: data.tags,
-        fullDescription: data.fullDescription,
-      }
-      try {
-        if (id) {
-          const updated = await updateProduct(connection, id, input)
-          updateProductState(id, updated)
-          pushToast('success', `Product "${updated.name}" updated and synced to store.`)
-        } else {
-          const created = await createProduct(connection, input)
-          addProduct(created)
-          pushToast('success', `Product "${created.name}" created and synced to store.`)
-        }
-      } catch (err) {
-        pushToast('error', `Failed to save product: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      }
+    } catch (err) {
+      pushToast('error', `Failed to save product: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
     setModalOpen(false)
     setEditTarget(null)
@@ -163,13 +135,13 @@ export default function ProductsPage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return
+    if (!connection) {
+      pushToast('error', 'No WooCommerce connection.')
+      return
+    }
     setDeleting(true)
     try {
-      if (isStandalone) {
-        await deleteStandaloneProduct(deleteTarget.id)
-      } else if (connection) {
-        await deleteProduct(connection, deleteTarget.id)
-      }
+      await deleteProduct(connection, deleteTarget.id)
       removeProduct(deleteTarget.id)
       pushToast('success', `Product "${deleteTarget.name}" deleted.`)
       setDeleteTarget(null)
@@ -187,22 +159,16 @@ export default function ProductsPage() {
       return
     }
     setEditingStock(null)
-    if (isStandalone) {
-      try {
-        const updated = await updateStandaloneProductStock(product.id, newStock)
-        updateProductState(product.id, updated)
-        pushToast('success', `Stock updated for "${product.name}".`)
-      } catch (err) {
-        pushToast('error', `Failed to update stock: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      }
-    } else if (connection) {
-      try {
-        const updated = await updateProductField(connection, product.id, 'stock_quantity', newStock)
-        updateProductState(product.id, updated)
-        pushToast('success', `Stock updated for "${product.name}".`)
-      } catch (err) {
-        pushToast('error', `Failed to update stock: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      }
+    if (!connection) {
+      pushToast('error', 'No WooCommerce connection.')
+      return
+    }
+    try {
+      const updated = await updateProductField(connection, product.id, 'stock_quantity', newStock)
+      updateProductState(product.id, updated)
+      pushToast('success', `Stock updated for "${product.name}".`)
+    } catch (err) {
+      pushToast('error', `Failed to update stock: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
@@ -213,22 +179,16 @@ export default function ProductsPage() {
       return
     }
     setEditingPrice(null)
-    if (isStandalone) {
-      try {
-        const updated = await updateStandaloneProduct(product.id, { regularPrice: newPrice })
-        updateProductState(product.id, updated)
-        pushToast('success', `Price updated for "${product.name}".`)
-      } catch (err) {
-        pushToast('error', `Failed to update price: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      }
-    } else if (connection) {
-      try {
-        const updated = await updateProductField(connection, product.id, 'regular_price', newPrice)
-        updateProductState(product.id, updated)
-        pushToast('success', `Price updated for "${product.name}".`)
-      } catch (err) {
-        pushToast('error', `Failed to update price: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      }
+    if (!connection) {
+      pushToast('error', 'No WooCommerce connection.')
+      return
+    }
+    try {
+      const updated = await updateProductField(connection, product.id, 'regular_price', newPrice)
+      updateProductState(product.id, updated)
+      pushToast('success', `Price updated for "${product.name}".`)
+    } catch (err) {
+      pushToast('error', `Failed to update price: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 

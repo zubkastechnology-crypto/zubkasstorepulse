@@ -6,7 +6,6 @@ import {
 } from '@/lib/woocommerce'
 import { supabase } from '@/lib/supabase'
 import { getAppMode, setAppMode as persistAppMode, type AppMode } from '@/lib/appMode'
-import { fetchStandaloneProducts, fetchStandaloneOrders, fetchStandaloneCategories } from '@/lib/standaloneDb'
 
 type Toast = { id: number; type: 'success' | 'error'; message: string }
 
@@ -82,7 +81,7 @@ export function WooProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
-  const isStandalone = appMode === 'standalone'
+  const isStandalone = false
 
   const loadWooData = useCallback(async (rawConn: unknown) => {
     if (!rawConn || typeof rawConn !== 'object') return
@@ -156,22 +155,11 @@ export function WooProvider({ children }: { children: ReactNode }) {
   }, [loadWooData])
 
   const refresh = useCallback(() => {
-    if (isStandalone) {
-      setLoading(true)
-      Promise.all([fetchStandaloneProducts(), fetchStandaloneOrders(), fetchStandaloneCategories()])
-        .then(([p, o, cats]) => {
-          setProducts(p)
-          setOrders(o)
-          setCategories((cats || []).map((c) => c.name))
-        })
-        .finally(() => setLoading(false))
-      return
-    }
     const current = activeConnRef.current || connection
     if (current) {
       loadWooData(current)
     }
-  }, [isStandalone, connection, loadWooData])
+  }, [connection, loadWooData])
 
   const connect = useCallback(
     async (data: WooConnection): Promise<{ ok: boolean; error?: string }> => {
@@ -262,7 +250,7 @@ export function WooProvider({ children }: { children: ReactNode }) {
       value={{
         connection,
         isConnected: !!connection,
-        isLive: !!connection || isStandalone,
+        isLive: !!connection,
         connecting,
         connect,
         disconnect,

@@ -19,7 +19,7 @@ export const DEFAULT_STORE_PROFILE: StoreProfile = {
   storeAddress: '78, Main Bazaar, Salem, Tamil Nadu - 636006',
   gstin: '',
   logoUrl: '/zubkas-logo.png',
-  appMode: 'standalone',
+  appMode: 'woo',
 }
 
 export function getStoreProfile(): StoreProfile {
@@ -56,7 +56,7 @@ export async function syncStoreProfileToCloud(profile: StoreProfile): Promise<vo
     store_address: profile.storeAddress,
     gstin: profile.gstin,
     logo_url: profile.logoUrl,
-    app_mode: profile.appMode ?? 'standalone',
+    app_mode: profile.appMode ?? 'woo',
   }, { onConflict: 'id' })
 }
 
@@ -72,7 +72,7 @@ export async function fetchStoreProfileFromCloud(): Promise<StoreProfile | null>
     storeAddress: data.store_address ?? DEFAULT_STORE_PROFILE.storeAddress,
     gstin: data.gstin ?? '',
     logoUrl: data.logo_url ?? DEFAULT_STORE_PROFILE.logoUrl,
-    appMode: data.app_mode ?? 'standalone',
+    appMode: data.app_mode ?? 'woo',
   }
 }
 

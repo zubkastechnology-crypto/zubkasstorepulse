@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Mail, Lock, Eye, EyeOff, Loader as Loader2, CircleCheck as CheckCircle2, Phone, Building2, ArrowRight, ShieldCheck, CircleAlert as AlertCircle, Globe, Key, Plug, Trash2, RefreshCw, Truck, Pencil, Plus, X, Bike, Store, MapPin, FileText, Image as ImageIcon, Database, Cloud, CloudOff, Zap, CloudDownload as DownloadCloud, CloudUpload as UploadCloud, Settings2, Box } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Loader as Loader2, CircleCheck as CheckCircle2, Phone, Building2, ArrowRight, ShieldCheck, CircleAlert as AlertCircle, Globe, Key, Plug, Trash2, RefreshCw, Truck, Pencil, Plus, X, Bike, Store, MapPin, FileText, Image as ImageIcon, Database, Cloud, CloudOff, Zap, CloudDownload as DownloadCloud, CloudUpload as UploadCloud } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import { useAuth } from '../auth/AuthContext'
 import { useWoo } from '../auth/WooContext'
@@ -80,23 +80,6 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
 
 function ProfileSecurityTab() {
   const { user, refreshSession } = useAuth()
-  const { appMode, setAppMode } = useWoo()
-
-  // Operational mode
-  const [modeSaving, setModeSaving] = useState(false)
-  const [modeSaved, setModeSaved] = useState(false)
-
-  const handleModeChange = (mode: 'standalone' | 'woo') => {
-    if (mode === appMode || modeSaving) return
-    setModeSaving(true)
-    setAppMode(mode)
-    localStorage.setItem('app_mode', mode === 'standalone' ? 'standalone' : 'woocommerce')
-    window.setTimeout(() => {
-      setModeSaving(false)
-      setModeSaved(true)
-      window.setTimeout(() => setModeSaved(false), 2500)
-    }, 350)
-  }
 
   // Business profile
   const [businessName, setBusinessName] = useState(user?.name ?? '')
@@ -211,73 +194,6 @@ function ProfileSecurityTab() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Operational Mode Selection Card */}
-      <Section
-        icon={Settings2}
-        title="Operational Mode"
-        desc="Choose how Zubkas StorePulse runs: as a standalone cloud inventory/POS or linked to WooCommerce."
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => handleModeChange('standalone')}
-              className={`flex flex-col items-start rounded-2xl border-2 p-5 text-left transition ${
-                appMode === 'standalone'
-                  ? 'border-brand bg-brand-50/20 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                  appMode === 'standalone' ? 'bg-brand text-white' : 'bg-slate-100 text-slate-500'
-                }`}>
-                  <Box className="h-5 w-5" />
-                </span>
-                <div>
-                  <h3 className="font-bold text-slate-900">Standalone Cloud POS</h3>
-                  <span className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">Manual Inventory</span>
-                </div>
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                Direct Supabase database storage for products, offline billing, counter sales, and local inventory.
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleModeChange('woo')}
-              className={`flex flex-col items-start rounded-2xl border-2 p-5 text-left transition ${
-                appMode === 'woo'
-                  ? 'border-brand bg-brand-50/20 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                  appMode === 'woo' ? 'bg-brand text-white' : 'bg-slate-100 text-slate-500'
-                }`}>
-                  <Globe className="h-5 w-5" />
-                </span>
-                <div>
-                  <h3 className="font-bold text-slate-900">WooCommerce Live Sync</h3>
-                  <span className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">WordPress Connected</span>
-                </div>
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                Real-time two-way synchronization of products, stock, online orders, and tracking with WordPress WooCommerce.
-              </p>
-            </button>
-          </div>
-
-          {modeSaved && (
-            <div className="flex items-center gap-1.5 text-sm text-green-600 animate-fade-in">
-              <CheckCircle2 className="h-4 w-4" /> Operational mode updated!
-            </div>
-          )}
-        </div>
-      </Section>
-
       {/* Store Profile */}
       <Section
         icon={Store}

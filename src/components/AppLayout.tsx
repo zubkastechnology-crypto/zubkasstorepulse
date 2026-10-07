@@ -25,7 +25,7 @@ const NAV_ITEMS: { key: NavKey; to: string; label: string; icon: React.Component
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, logout, permissions, role } = useAuth()
-  const { isConnected, isLive, toasts, dismissToast, soundAlertsOn, toggleSoundAlerts, newOrderAlerts, dismissNewOrderAlert, isStandalone } = useWoo()
+  const { isConnected, isLive, toasts, dismissToast, soundAlertsOn, toggleSoundAlerts, newOrderAlerts, dismissNewOrderAlert } = useWoo()
   const navigate = useNavigate()
   const location = useLocation()
   const { products } = useWoo()
@@ -105,7 +105,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   const visibleNav = NAV_ITEMS.filter((item) => {
-    if (item.key === 'categories') return isStandalone && permissions.includes('categories')
+    if (item.key === 'categories') return false
     return permissions.includes(item.key)
   })
 
@@ -306,7 +306,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                       ? 'bg-green-50 text-green-700 hover:bg-green-100'
                       : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
                   }`}
-                  title={isConnected ? 'Live Store Connected' : 'Pure Cloud Mode — orders sync directly to your cloud database'}
+                  title={isConnected ? 'Live Store Connected' : 'Store not connected — configure WooCommerce in Settings'}
                 >
                   <span className={`relative flex h-2 w-2 ${isLive ? '' : ''}`}>
                     {isLive && (
@@ -314,7 +314,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     )}
                     <span className={`relative inline-flex h-2 w-2 rounded-full ${isLive ? 'bg-green-500' : 'bg-amber-400'}`} />
                   </span>
-                  {isConnected ? 'Live Store Connected' : 'Pure Cloud Mode'}
+                  {isConnected ? 'Live Store Connected' : 'Not Connected'}
                 </Link>
               )}
               <div className="relative" ref={bellRef}>

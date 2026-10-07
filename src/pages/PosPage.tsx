@@ -4,7 +4,6 @@ import AppLayout from '@/components/AppLayout'
 import { useWoo } from '@/auth/WooContext'
 import { useAuth } from '@/auth/AuthContext'
 import { createPosOrder, type CreatePosOrderInput, type CreatedPosOrder } from '@/lib/woocommerce'
-import { createStandaloneSale } from '@/lib/standaloneDb'
 import { formatCurrency, type Product } from '@/data/mockData'
 import ThermalReceiptModal from '@/components/ThermalReceiptModal'
 import { printThermalReceipt, type ReceiptData, type RollSize } from '@/lib/thermalReceipt'
@@ -27,8 +26,7 @@ const PAYMENT_METHODS: { key: PaymentMethod; label: string; icon: React.Componen
 const TAX_RATE = 0 // configurable; set to 0 for no tax by default
 
 export default function PosPage() {
-  const { products, loading, isLive, connection, refresh, pushToast, appMode } = useWoo()
-  const isStandalone = appMode === 'standalone' || !connection
+  const { products, loading, isLive, connection, refresh, pushToast } = useWoo()
 
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('All')
@@ -148,16 +146,12 @@ export default function PosPage() {
     }
 
     try {
-      let created: CreatedPosOrder
-      if (connection && !isStandalone) {
-        created = await createPosOrder(connection, orderData as CreatePosOrderInput)
-      } else {
-        const result = await createStandaloneSale({
-          ...orderData,
-          cashierName: user?.name ?? 'Cashier',
-        })
-        created = { id: result.orderId, number: result.orderNumber, total: result.total, date: result.date }
+      if (!connection) {
+        pushToast('error', 'No WooCommerce connection. Please connect your store in Settings.')
+        setProcessing(false)
+        return
       }
+      const created: CreatedPosOrder = await createPosOrder(connection, orderData as CreatePosOrderInput)
       setReceipt(created)
       setReceiptData({ ...orderData, paymentMethod })
       pushToast('success', `Order ${created.id} completed and synced to Cloud!`)
